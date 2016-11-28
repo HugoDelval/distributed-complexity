@@ -20,7 +20,7 @@ import System.IO.Silently
 
 workerAnalyseComplexity :: (ProcessId, NodeId, String) -> Process ()
 workerAnalyseComplexity (master, workerId, url) = do
-  liftIO ( putStrLn $ "Starting worker n°" ++ (show workerId) ++ " with parameter: " ++ url)
+  liftIO ( putStrLn $ "Starting worker : " ++ (show workerId) ++ " with parameter: " ++ url)
   let repoName = last $ splitOn "/" url
   liftIO $ callProcess "/usr/bin/git" ["clone", url, repoName]
   let conf = (Config 6 [] [] [] Colored)
@@ -31,6 +31,7 @@ workerAnalyseComplexity (master, workerId, url) = do
   liftIO $ putStrLn $ "Launching analyse for " ++ url
   (output, _) <- liftIO $ capture $ runSafeT $ runEffect $ exportStream conf source
   liftIO $ callProcess "/bin/rm" ["-rf", repoName]
+  liftIO ( putStrLn $ "End of worker : " ++ (show workerId) ++ " with parameter: " ++ url)
   send master $ (workerId, url, output)
 
 
@@ -43,7 +44,6 @@ myRemoteTable = Main.__remoteTable initRemoteTable
 main :: IO ()
 main = do
   args <- getArgs
-
   case args of
     ["master", host, port] -> do
       backend <- initializeBackend host port myRemoteTable
@@ -58,7 +58,8 @@ master backend slaves = do
   let repos = ["https://github.com/jepst/CloudHaskell", "https://github.com/mwotton/Hubris", "https://github.com/dmbarbour/Sirea", "https://github.com/michaelochurch/summer-2015-haskell-class", "https://github.com/jgoerzen/twidge", "https://github.com/ollef/Earley", "https://github.com/creswick/cabal-dev", "https://github.com/lambdacube3d/lambdacube-edsl"]
   responses <- feedSlavesAndGetResponses repos slaves [] []
   liftIO $ mapM (\(r,u) -> putStrLn $ "\n\n\n\n**************************************************************\n" ++ u ++ " :\n**************************************************************\n\n" ++  r) responses
-  terminateAllSlaves backend
+  return ()
+  -- terminateAllSlaves backend
 
 
 feedSlavesAndGetResponses :: [String] -> [NodeId] -> [NodeId] -> [(String,String)] -> Process [(String,String)]

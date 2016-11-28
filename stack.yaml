@@ -68,4 +68,4 @@ image:
   container:
     name: hugodelval/distributed-complexity
     # Base it on the stack-run images
-    base: fpco/stack-run
+    base: hugodelval/base-image
