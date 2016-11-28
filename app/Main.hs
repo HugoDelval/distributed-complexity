@@ -23,7 +23,7 @@ workerAnalyseComplexity (master, workerId, url) = do
   liftIO ( putStrLn $ "Starting worker n°" ++ (show workerId) ++ " with parameter: " ++ url)
   let repoName = last $ splitOn "/" url
   liftIO $ callProcess "/usr/bin/git" ["clone", url, repoName]
-  let conf = (Config 4 [] [] [] JSON)
+  let conf = (Config 6 [] [] [] Colored)
   let source = allFiles repoName
               >-> P.mapM (liftIO . analyze conf)
               >-> P.map (filterResults conf)
@@ -31,7 +31,7 @@ workerAnalyseComplexity (master, workerId, url) = do
   liftIO $ putStrLn $ "Launching analyse for " ++ url
   (output, _) <- liftIO $ capture $ runSafeT $ runEffect $ exportStream conf source
   liftIO $ callProcess "/bin/rm" ["-rf", repoName]
-  send master $ (workerId, output)
+  send master $ (workerId, url, output)
 
 
 remotable ['workerAnalyseComplexity]
@@ -57,18 +57,18 @@ master backend slaves = do
   liftIO . putStrLn $ "Slaves: " ++ show slaves
   let repos = ["https://github.com/jepst/CloudHaskell", "https://github.com/mwotton/Hubris", "https://github.com/dmbarbour/Sirea", "https://github.com/michaelochurch/summer-2015-haskell-class", "https://github.com/jgoerzen/twidge", "https://github.com/ollef/Earley", "https://github.com/creswick/cabal-dev", "https://github.com/lambdacube3d/lambdacube-edsl"]
   responses <- feedSlavesAndGetResponses repos slaves [] []
-  liftIO $ mapM putStrLn responses
+  liftIO $ mapM (\(r,u) -> putStrLn $ "\n\n\n\n**************************************************************\n" ++ u ++ " :\n**************************************************************\n\n" ++  r) responses
   terminateAllSlaves backend
 
 
-feedSlavesAndGetResponses :: [String] -> [NodeId] -> [NodeId] -> [String] -> Process [String]
+feedSlavesAndGetResponses :: [String] -> [NodeId] -> [NodeId] -> [(String,String)] -> Process [(String,String)]
 feedSlavesAndGetResponses [] freeSlaves [] responses = return responses
 feedSlavesAndGetResponses repos freeSlaves busySlaves responses = do
   (restRepos, newBusySlaves, newFreeSlaves) <- feedSlaves repos freeSlaves []
-  m <- expectTimeout 60000000 -- 1min
+  m <- expectTimeout 60000000 -- 1min max for each repo
   case m of
     Nothing            -> die "Master fatal failure, exiting."
-    Just (slave, resp) -> feedSlavesAndGetResponses restRepos (slave:newFreeSlaves) (delete slave (newBusySlaves ++ busySlaves)) (resp:responses)
+    Just (slave, url, resp) -> feedSlavesAndGetResponses restRepos (slave:newFreeSlaves) (delete slave (newBusySlaves ++ busySlaves)) ((resp,url):responses)
 
 
 feedSlaves :: [String] -> [NodeId] -> [NodeId] -> Process ([String], [NodeId], [NodeId])
