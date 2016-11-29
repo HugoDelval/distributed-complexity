@@ -64,7 +64,7 @@ master backend slaves = do
   responses <- feedSlavesAndGetResponses repos slaves [] []
   liftIO $ mapM (\(r,u) -> putStrLn $ "\n\n\n\n**************************************************************\n" ++ u ++ " :\n**************************************************************\n\n" ++  r) responses
   return ()
-  terminateAllSlaves backend
+  -- terminateAllSlaves backend
 
 
 feedSlavesAndGetResponses :: [String] -> [NodeId] -> [NodeId] -> [(String,String)] -> Process [(String,String)]
