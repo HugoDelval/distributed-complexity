@@ -3,6 +3,7 @@ module Main where
 
 import System.Environment (getArgs)
 import System.Process
+import System.Directory (doesDirectoryExist)
 import Control.Distributed.Process
 import Control.Distributed.Process.Node (initRemoteTable, runProcess)
 import Control.Distributed.Process.Backend.SimpleLocalnet
@@ -22,15 +23,19 @@ workerAnalyseComplexity :: (ProcessId, NodeId, String) -> Process ()
 workerAnalyseComplexity (master, workerId, url) = do
   liftIO ( putStrLn $ "Starting worker : " ++ (show workerId) ++ " with parameter: " ++ url)
   let repoName = last $ splitOn "/" url
-  liftIO $ callProcess "/usr/bin/git" ["clone", url, repoName]
+  gitRepoExists <- liftIO $ doesDirectoryExist ("/tmp/" ++ repoName)
+  if not gitRepoExists then do
+    liftIO $ callProcess "/usr/bin/git" ["clone", url, "/tmp/" ++ repoName]
+  else do
+    liftIO $ putStrLn "Repository already there."
   let conf = (Config 6 [] [] [] Colored)
-  let source = allFiles repoName
+  let source = allFiles ("/tmp/" ++ repoName)
               >-> P.mapM (liftIO . analyze conf)
               >-> P.map (filterResults conf)
               >-> P.filter filterNulls
   liftIO $ putStrLn $ "Launching analyse for " ++ url
   (output, _) <- liftIO $ capture $ runSafeT $ runEffect $ exportStream conf source
-  liftIO $ callProcess "/bin/rm" ["-rf", repoName]
+  -- liftIO $ callProcess "/bin/rm" ["-rf", "/tmp/" ++ repoName]
   liftIO ( putStrLn $ "End of worker : " ++ (show workerId) ++ " with parameter: " ++ url)
   send master $ (workerId, url, output)
 
@@ -59,7 +64,7 @@ master backend slaves = do
   responses <- feedSlavesAndGetResponses repos slaves [] []
   liftIO $ mapM (\(r,u) -> putStrLn $ "\n\n\n\n**************************************************************\n" ++ u ++ " :\n**************************************************************\n\n" ++  r) responses
   return ()
-  -- terminateAllSlaves backend
+  terminateAllSlaves backend
 
 
 feedSlavesAndGetResponses :: [String] -> [NodeId] -> [NodeId] -> [(String,String)] -> Process [(String,String)]

@@ -34,9 +34,9 @@ stack exec distributed-complexity-exe -- master 0.0.0.0 1238
 
 ```bash
 # For the slave(s) :
-docker run -i -w /app -p 0.0.0.0:8001:8001 --net=host hugodelval/distributed-complexity  /usr/local/bin/distributed-complexity-exe slave 0.0.0.0 8001
+docker run -i -p 0.0.0.0:8001:8001 --net=host hugodelval/distributed-complexity stack exec distributed-complexity-exe slave 0.0.0.0 8001
 # For the master
-docker run -i -w /app -p 0.0.0.0:8002:8002 --net=host hugodelval/distributed-complexity  /usr/local/bin/distributed-complexity-exe master 0.0.0.0 8002
+docker run -i -p 0.0.0.0:8002:8002 --net=host hugodelval/distributed-complexity stack exec distributed-complexity-exe master 0.0.0.0 8002
 ```
 
 Note the use of ```--net=host``` option, which is needed to work easily with UDP multicast with docker. (cf https://hackage.haskell.org/package/distributed-process-simplelocalnet-0.2.3.3/docs/Control-Distributed-Process-Backend-SimpleLocalnet.html)

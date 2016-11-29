@@ -64,8 +64,3 @@ extra-package-dbs: []
 #
 # Allow a newer minor version of GHC than the snapshot specifies
 # compiler-check: newer-minor
-image:
-  container:
-    name: hugodelval/distributed-complexity
-    # Base it on the stack-run images
-    base: hugodelval/base-image

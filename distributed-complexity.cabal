@@ -35,6 +35,7 @@ executable distributed-complexity-exe
                      , pipes
                      , pipes-safe
                      , silently
+                     , directory
   default-language:    Haskell2010
 
 test-suite distributed-complexity-test
