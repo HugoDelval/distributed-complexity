@@ -40,3 +40,19 @@ docker run -i -p 0.0.0.0:8002:8002 --net=host hugodelval/distributed-complexity 
 ```
 
 Note the use of ```--net=host``` option, which is needed to work easily with UDP multicast with docker. (cf https://hackage.haskell.org/package/distributed-process-simplelocalnet-0.2.3.3/docs/Control-Distributed-Process-Backend-SimpleLocalnet.html)
+
+## Benchmark
+
+Please see test/benchmark.pdf
+
+Tested with a list of repositories :
+
+```let repos = ["https://github.com/jepst/CloudHaskell",
+		"https://github.com/mwotton/Hubris", 
+		 "https://github.com/dmbarbour/Sirea", 
+		 "https://github.com/michaelochurch/summer-2015-haskell-class", 
+		 "https://github.com/jgoerzen/twidge", 
+		 "https://github.com/ollef/Earley", 
+		 "https://github.com/creswick/cabal-dev", 
+		 "https://github.com/lambdacube3d/lambdacube-edsl"]```
+
